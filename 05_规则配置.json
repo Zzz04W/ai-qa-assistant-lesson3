@@ -1,0 +1,148 @@
+{
+  "version": "1.0",
+  "threshold": 0.35,
+  "no_hit": {
+    "action": "拒答",
+    "message": "本助手未在课程 FAQ 中找到相关问题，建议换一种问法或咨询课程负责人。"
+  },
+  "low_confidence": {
+    "action": "拒答",
+    "condition": "最高匹配得分 < threshold",
+    "message": "问题与课程资料的匹配度较低，为避免编造答案，本助手不予回答；请咨询课程负责人或换一种问法。"
+  },
+  "tie": {
+    "action": "显示多条",
+    "max_items": 2,
+    "condition": "最高分并列且 >= threshold",
+    "note": "可能需要人工确认"
+  },
+  "short_chat": {
+    "max_chars": 3,
+    "message": "本助手只回答《人工智能工具应用实践》课程相关问题。"
+  },
+  "scoring": {
+    "normalization": "转小写；仅保留 Unicode 字母与数字，去除空白与标点",
+    "bigram": "归一化字符串的相邻二元组集合；长度 < 2 时整串视为一个单元",
+    "formula": "score = min(1, Dice(问题二元组, 候选二元组) + 0.30*包含命中 + min(0.15, 0.05*标签命中数))",
+    "candidates": "每条目的 question + aliases 逐个计算取最高分"
+  },
+  "rules": [
+    {
+      "rule_id": "V01",
+      "category": "成绩与分数",
+      "keywords": [
+        "成绩",
+        "分数",
+        "排名",
+        "绩点",
+        "挂科"
+      ],
+      "exempt_keywords": [
+        "Trae",
+        "工具",
+        "验收",
+        "影响",
+        "装"
+      ],
+      "action": "拒答",
+      "fallback": "请咨询课程负责人，本助手只回答课程资料与平台使用问题。",
+      "example": "我的成绩是多少"
+    },
+    {
+      "rule_id": "V02",
+      "category": "代写与学术诚信",
+      "keywords": [
+        "帮我写",
+        "代做",
+        "答案是什么",
+        "直接给答案"
+      ],
+      "exempt_keywords": [],
+      "action": "拒答",
+      "fallback": "超出本助手范围，本助手不代写作业，可提供操作步骤指引。",
+      "example": "能不能帮我写作业"
+    },
+    {
+      "rule_id": "V03",
+      "category": "个人隐私",
+      "keywords": [
+        "身份证",
+        "手机号",
+        "家庭住址",
+        "他人信息"
+      ],
+      "exempt_keywords": [],
+      "action": "拒答",
+      "fallback": "本助手不处理个人信息，请勿在此输入。",
+      "example": "查一下某同学的手机号"
+    },
+    {
+      "rule_id": "V04",
+      "category": "医疗法律投资建议",
+      "keywords": [
+        "看病",
+        "法律",
+        "投资",
+        "荐股",
+        "理财"
+      ],
+      "exempt_keywords": [],
+      "action": "拒答",
+      "fallback": "超出本助手范围，请咨询相应专业人士。",
+      "example": "该买哪只基金"
+    },
+    {
+      "rule_id": "V05",
+      "category": "精确日期与考场",
+      "keywords": [
+        "几月几号",
+        "哪天考试",
+        "考场在哪"
+      ],
+      "exempt_keywords": [],
+      "action": "拒答",
+      "fallback": "具体日期以课程通知为准，本助手不提供未收录的日期。",
+      "example": "考试是几月几号"
+    },
+    {
+      "rule_id": "V06",
+      "category": "外部平台账号问题",
+      "keywords": [
+        "密码找回",
+        "账号被封",
+        "付费",
+        "充值"
+      ],
+      "exempt_keywords": [],
+      "action": "拒答",
+      "fallback": "请通过对应平台的官方渠道处理；静态展示版不提供登录。",
+      "example": "帮我找回平台密码"
+    },
+    {
+      "rule_id": "V07",
+      "category": "政治敏感与不当内容",
+      "keywords": [
+        "侮辱",
+        "歧视",
+        "违规内容"
+      ],
+      "exempt_keywords": [],
+      "action": "拒答",
+      "fallback": "该问题不在本助手服务范围内。",
+      "example": "（课堂占位，不写具体示例）"
+    },
+    {
+      "rule_id": "V08",
+      "category": "与本课无关的闲聊",
+      "keywords": [
+        "天气",
+        "气温",
+        "寒暄"
+      ],
+      "exempt_keywords": [],
+      "action": "拒答",
+      "fallback": "本助手只回答《人工智能工具应用实践》课程相关问题。",
+      "example": "今天天气怎么样"
+    }
+  ]
+}
