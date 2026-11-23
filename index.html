@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>课程智能问答助手 · 第 3 课</title>
+<style>
+  :root{
+    --bg:#f5f7fb; --card:#ffffff; --ink:#1f2937; --muted:#6b7280;
+    --line:#e5e7eb; --brand:#2563eb; --brand-soft:#eff6ff;
+    --ok:#15803d; --ok-bg:#f0fdf4; --no:#b91c1c; --no-bg:#fef2f2;
+    --warn:#b45309; --warn-bg:#fffbeb;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    line-height:1.7;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:880px;margin:0 auto;padding:32px 18px 56px}
+  header{margin-bottom:22px}
+  .eyebrow{display:inline-block;background:var(--brand-soft);color:var(--brand);
+    font-size:12px;font-weight:700;letter-spacing:.06em;padding:5px 12px;border-radius:999px}
+  h1{font-size:27px;margin:12px 0 6px;letter-spacing:-.02em}
+  .sub{color:var(--muted);font-size:14px;margin:0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:22px;box-shadow:0 6px 24px rgba(15,23,42,.05)}
+  label{display:block;font-size:13px;font-weight:700;margin-bottom:9px;color:#374151}
+  .ask{display:flex;gap:10px}
+  input[type=text]{flex:1;min-width:0;padding:13px 15px;font-size:15px;
+    border:1px solid #d1d5db;border-radius:10px;background:#fff;color:var(--ink);outline:none}
+  input[type=text]:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+  button{cursor:pointer;font-family:inherit}
+  .btn-primary{padding:0 22px;border:0;border-radius:10px;background:var(--brand);color:#fff;
+    font-size:15px;font-weight:700;white-space:nowrap;transition:background .15s}
+  .btn-primary:hover{background:#1d4ed8}
+  .examples{margin-top:18px}
+  .examples .t{font-size:12px;color:var(--muted);margin-bottom:9px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{background:#f9fafb;border:1px solid var(--line);color:#374151;border-radius:999px;
+    padding:6px 13px;font-size:13px;transition:all .15s}
+  .chip:hover{background:var(--brand-soft);border-color:#bfdbfe;color:var(--brand)}
+  .result{margin-top:22px}
+  .badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;
+    padding:5px 11px;border-radius:999px;margin-bottom:12px}
+  .badge.ok{background:var(--ok-bg);color:var(--ok)}
+  .badge.no{background:var(--no-bg);color:var(--no)}
+  .answer-box{border:1px solid #bbf7d0;background:#fbfffc;border-radius:12px;padding:18px 20px}
+  .answer-box.reject{border-color:#fecaca;background:#fffafa}
+  .q-echo{font-size:13px;color:var(--muted);margin-bottom:10px}
+  .a-text{font-size:16px;font-weight:600;margin:0 0 16px;line-height:1.8}
+  .meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;
+    border-top:1px dashed var(--line);padding-top:14px}
+  .meta div{font-size:12px;color:var(--muted);min-width:0}
+  .meta b{display:block;color:#111827;font-size:13px;font-weight:700;margin-top:2px;
+    overflow-wrap:anywhere}
+  .hit{border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:10px;background:#fff}
+  .hit .hid{font-size:12px;color:var(--brand);font-weight:700}
+  .hit .hq{font-size:13px;color:var(--muted);margin:3px 0 8px}
+  .note{margin-top:12px;background:var(--warn-bg);border:1px solid #fde68a;color:var(--warn);
+    border-radius:10px;padding:10px 13px;font-size:13px}
+  .empty{margin-top:22px;text-align:center;color:#9ca3af;font-size:14px;padding:26px;
+    border:1px dashed var(--line);border-radius:14px}
+  footer{margin-top:26px;text-align:center;color:#9ca3af;font-size:12px;line-height:1.9}
+  @media(max-width:560px){.wrap{padding:20px 12px 40px}h1{font-size:23px}
+    .card{padding:17px}.ask{flex-direction:column}.btn-primary{padding:13px;height:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="eyebrow">课程知识库 · 本地问答</span>
+    <h1>AI 智能问答助手</h1>
+    <p class="sub">基于《人工智能工具应用实践》课程 FAQ · 可显示命中依据与来源 · 越界会拒答</p>
+  </header>
+
+  <section class="card">
+    <label for="q">输入你的问题</label>
+    <div class="ask">
+      <input id="q" type="text" placeholder="例如：课件在哪里下载？" autocomplete="off">
+      <button class="btn-primary" id="askBtn">提问</button>
+    </div>
+    <div class="examples">
+      <div class="t">试试这些示例（含别名问法、越界问法与无命中问法）</div>
+      <div class="chips" id="chips"></div>
+    </div>
+    <div id="result" class="result"></div>
+  </section>
+
+  <footer>
+    本助手基于本地课堂 FAQ，不连接外部大模型。<br>
+    全部素材为课堂虚构数据；越界与低置信度问题一律拒答，不编造课程政策。
+  </footer>
+</div>
+
+<script>
+/* ===== 内嵌知识库与规则（由 build_html.py 注入） ===== */
+const KB = {"note": "answer 逐字取自 02_规范问答集.csv；source 记录 qid 与原始语料行号", "items": [{"id": "q01", "question": "这门课一共几次课", "aliases": ["课程有几次课", "一共几节课", "几次课", "课程总共有几节课"], "answer": "共 16 次课，每次 2 课时，合计 32 课时。", "tags": ["课程内容", "课程安排"], "source": "q01 + 原始语料行号 1,2,3", "scope": "课程内容", "updated": "课程日期占位（2026-11-23 制作）"}, {"id": "q02", "question": "课件在哪里下载", "aliases": ["课件在哪下", "课件下载", "课件在哪里取用", "PPT 在哪拿"], "answer": "在课程网站「课件中心」页面按课次下载，也可在首页下载区取用。", "tags": ["课件", "下载", "PPT"], "source": "q02 + 原始语料行号 4,5", "scope": "平台操作", "updated": "课程日期占位（2026-11-23 制作）"}, {"id": "q03", "question": "练习资源包怎么拿", "aliases": ["练习资源包在哪儿", "资源包怎么下载", "ZIP 包怎么拿"], "answer": "在「练习下载」页面按课次点击对应的 ZIP 资源包即可下载。", "tags": ["练习资源包", "下载"], "source": "q03 + 原始语料行号 6,9", "scope": "平台操作", "updated": "课程日期占位（2026-11-23 制作）"}, {"id": "q04", "question": "一次练习要做多久", "aliases": ["一次练习多久", "练习要做多长时间", "练习时长"], "answer": "每套练习设计为 70—100 分钟，不少于 60 分钟。", "tags": ["练习", "时长"], "source": "q04 + 原始语料行号 8", "scope": "作业提交", "updated": "课程日期占位（2026-11-23 制作）"}, {"id": "q05", "question": "练习题可以一个人做吗", "aliases": ["需要组队吗", "练习题能一个人做吗", "是否要组队"], "answer": "可以。每次课的练习题均按单人独立完成设计，不需要组队。", "tags": ["练习", "单人完成"], "source": "q05 + 原始语料行号 7,12", "scope": "作业提交", "updated": "课程日期占位（2026-11-23 制作）"}, {"id": "q06", "question": "课程用哪些工具", "aliases": ["主要用啥工具", "课程用啥工具", "用什么工具"], "answer": "以 WorkBuddy 为主要工具；Trae、DeepSeek 等作为可选对照工具，不参与验收。", "tags": ["工具", "WorkBuddy"], "source": "q06 + 原始语料行号 13,14", "scope": "工具使用", "updated": "课程日期占位（2026-11-23 制作）"}, {"id": "q07", "question": "没装 Trae 会不会影响成绩", "aliases": ["不装 Trae 影响吗", "Trae 要不要装", "可选工具影响验收吗"], "answer": "不会。可选工具不参与验收，缺少账号不影响完成任务。", "tags": ["工具", "验收", "Trae"], "source": "q07 + 原始语料行号 15", "scope": "工具使用", "updated": "课程日期占位（2026-11-23 制作）"}, {"id": "q08", "question": "不会编程能选吗", "aliases": ["没有编程基础可以吗", "需要编程基础吗", "零基础能学吗"], "answer": "可以。课程不要求编程基础，全部任务提供逐步操作指导。", "tags": ["课程内容", "编程基础"], "source": "q08 + 原始语料行号 16", "scope": "课程内容", "updated": "课程日期占位（2026-11-23 制作）"}, {"id": "q09", "question": "术语词典在哪", "aliases": ["词典在哪", "术语表在哪", "Term 是什么意思", "术语词典在哪里"], "answer": "在课程网站「术语词典」页面，可按关键词检索。", "tags": ["术语词典", "查询"], "source": "q09 + 原始语料行号 17,18", "scope": "平台操作", "updated": "课程日期占位（2026-11-23 制作）"}, {"id": "q10", "question": "课程大纲在哪看", "aliases": ["课程大纲在哪", "大纲在哪看", "syllabus 在哪"], "answer": "在课程网站「课程大纲」页面，按 16 次课逐条列出。", "tags": ["课程大纲", "查询"], "source": "q10 + 原始语料行号 20", "scope": "课程内容", "updated": "课程日期占位（2026-11-23 制作）"}, {"id": "q11", "question": "有没有教材", "aliases": ["教材在哪", "教材文本在哪", "有没有教材文本"], "answer": "课程提供教材文本阅读版与分章文本，可在网站「拓展资源」中取用。", "tags": ["教材", "资源"], "source": "q11 + 原始语料行号 21,22", "scope": "课程内容", "updated": "课程日期占位（2026-11-23 制作）"}, {"id": "q12", "question": "静态展示版能登录吗", "aliases": ["静态版能登录吗", "GitHub Pages 版能登录吗", "静态展示版登录"], "answer": "不能。GitHub Pages 静态展示版不运行后端，登录与提交功能不可用，但资料可以直接下载。", "tags": ["静态展示版", "登录"], "source": "q12 + 原始语料行号 24", "scope": "平台操作", "updated": "课程日期占位（2026-11-23 制作）"}, {"id": "q13", "question": "静态版怎么下载资料", "aliases": ["静态展示版怎么下载资料", "静态版下载资料", "GitHub Pages 版怎么下载"], "answer": "练习资源为公开静态文件，无需登录即可在「练习下载」页面直接下载。", "tags": ["静态展示版", "下载"], "source": "q13 + 原始语料行号 25", "scope": "平台操作", "updated": "课程日期占位（2026-11-23 制作）"}, {"id": "q14", "question": "个人中心能干什么", "aliases": ["个人中心是干嘛的", "个人中心有什么", "登录后能看到什么"], "answer": "登录后可以查看自己的选课意向与学习反馈记录。", "tags": ["平台操作", "个人中心"], "source": "q14 + 原始语料行号 23", "scope": "平台操作", "updated": "课程日期占位（2026-11-23 制作）"}, {"id": "q15", "question": "知识图谱能看吗", "aliases": ["知识图谱在哪看", "知识点关联图", "图谱能看吗"], "answer": "可以，在「知识模块」页面查看知识点之间的关联图。", "tags": ["知识图谱", "课程内容"], "source": "q15 + 原始语料行号 19", "scope": "课程内容", "updated": "课程日期占位（2026-11-23 制作）"}, {"id": "q16", "question": "忘了密码怎么办", "aliases": ["忘记密码怎么办", "密码忘了", "忘了密码"], "answer": "本地完整交互版的账号由课程负责人管理；静态展示版不提供登录，无需密码。", "tags": ["平台操作", "账号"], "source": "q16 + 原始语料行号 26", "scope": "平台操作", "updated": "课程日期占位（2026-11-23 制作）"}, {"id": "q17", "question": "作业什么时候交", "aliases": ["作业提交时间", "作业什么时候提交", "作业何时交"], "answer": "作业提交时间以课程通知为准；未在语料中给出的具体日期一律不作答复。", "tags": ["作业提交", "平台操作"], "source": "q17 + 原始语料行号 10", "scope": "作业提交", "updated": "课程日期占位（2026-11-23 制作）"}]};
+const CFG = {"version": "1.0", "threshold": 0.35, "no_hit": {"action": "拒答", "message": "本助手未在课程 FAQ 中找到相关问题，建议换一种问法或咨询课程负责人。"}, "low_confidence": {"action": "拒答", "condition": "最高匹配得分 \u003c threshold", "message": "问题与课程资料的匹配度较低，为避免编造答案，本助手不予回答；请咨询课程负责人或换一种问法。"}, "tie": {"action": "显示多条", "max_items": 2, "condition": "最高分并列且 >= threshold", "note": "可能需要人工确认"}, "short_chat": {"max_chars": 3, "message": "本助手只回答《人工智能工具应用实践》课程相关问题。"}, "scoring": {"normalization": "转小写；仅保留 Unicode 字母与数字，去除空白与标点", "bigram": "归一化字符串的相邻二元组集合；长度 \u003c 2 时整串视为一个单元", "formula": "score = min(1, Dice(问题二元组, 候选二元组) + 0.30*包含命中 + min(0.15, 0.05*标签命中数))", "candidates": "每条目的 question + aliases 逐个计算取最高分"}, "rules": [{"rule_id": "V01", "category": "成绩与分数", "keywords": ["成绩", "分数", "排名", "绩点", "挂科"], "exempt_keywords": ["Trae", "工具", "验收", "影响", "装"], "action": "拒答", "fallback": "请咨询课程负责人，本助手只回答课程资料与平台使用问题。", "example": "我的成绩是多少"}, {"rule_id": "V02", "category": "代写与学术诚信", "keywords": ["帮我写", "代做", "答案是什么", "直接给答案"], "exempt_keywords": [], "action": "拒答", "fallback": "超出本助手范围，本助手不代写作业，可提供操作步骤指引。", "example": "能不能帮我写作业"}, {"rule_id": "V03", "category": "个人隐私", "keywords": ["身份证", "手机号", "家庭住址", "他人信息"], "exempt_keywords": [], "action": "拒答", "fallback": "本助手不处理个人信息，请勿在此输入。", "example": "查一下某同学的手机号"}, {"rule_id": "V04", "category": "医疗法律投资建议", "keywords": ["看病", "法律", "投资", "荐股", "理财"], "exempt_keywords": [], "action": "拒答", "fallback": "超出本助手范围，请咨询相应专业人士。", "example": "该买哪只基金"}, {"rule_id": "V05", "category": "精确日期与考场", "keywords": ["几月几号", "哪天考试", "考场在哪"], "exempt_keywords": [], "action": "拒答", "fallback": "具体日期以课程通知为准，本助手不提供未收录的日期。", "example": "考试是几月几号"}, {"rule_id": "V06", "category": "外部平台账号问题", "keywords": ["密码找回", "账号被封", "付费", "充值"], "exempt_keywords": [], "action": "拒答", "fallback": "请通过对应平台的官方渠道处理；静态展示版不提供登录。", "example": "帮我找回平台密码"}, {"rule_id": "V07", "category": "政治敏感与不当内容", "keywords": ["侮辱", "歧视", "违规内容"], "exempt_keywords": [], "action": "拒答", "fallback": "该问题不在本助手服务范围内。", "example": "（课堂占位，不写具体示例）"}, {"rule_id": "V08", "category": "与本课无关的闲聊", "keywords": ["天气", "气温", "寒暄"], "exempt_keywords": [], "action": "拒答", "fallback": "本助手只回答《人工智能工具应用实践》课程相关问题。", "example": "今天天气怎么样"}]};
+
+/* ===== 与 scripts/matcher.py 严格同口径的匹配引擎 ===== */
+function normalize(s){
+  return Array.from(String(s).toLowerCase())
+    .filter(ch => /\p{L}|\p{N}/u.test(ch)).join('');
+}
+function bigrams(s){
+  const out = new Set();
+  if(s.length >= 2){ for(let i=0;i<s.length-1;i++) out.add(s.slice(i,i+2)); }
+  else if(s.length === 1){ out.add(s); }
+  return out;
+}
+function courseTermBigrams(){
+  const pool = new Set();
+  for(const it of KB.items){
+    for(const text of [it.question, ...it.aliases, ...it.tags]){
+      for(const g of bigrams(normalize(text))) pool.add(g);
+    }
+  }
+  return pool;
+}
+function scoreEntry(qn, entry){
+  const qb = bigrams(qn);
+  let best = 0, matched = '';
+  for(const cand of [entry.question, ...entry.aliases]){
+    const cn = normalize(cand);
+    if(!cn) continue;
+    const cb = bigrams(cn);
+    let dice = 0;
+    if(qb.size && cb.size){
+      let inter = 0;
+      cb.forEach(g => { if(qb.has(g)) inter++; });
+      dice = 2*inter/(qb.size+cb.size);
+    }
+    const contain = (cn.includes(qn) || qn.includes(cn)) ? 0.30 : 0;
+    let tagHits = 0;
+    for(const t of entry.tags){
+      const tn = normalize(t);
+      if(tn.length >= 2 && qn.includes(tn)) tagHits++;
+    }
+    const kwhit = Math.min(0.15, 0.05*tagHits);
+    const score = Math.min(1, dice + contain + kwhit);
+    if(score > best){ best = score; matched = cand; }
+  }
+  return [best, matched];
+}
+function checkOutOfScope(qn){
+  for(const rule of CFG.rules){
+    const kws = rule.keywords.map(normalize).filter(Boolean);
+    if(!kws.some(k => qn.includes(k))) continue;
+    const exempt = (rule.exempt_keywords || []).map(normalize).filter(Boolean);
+    if(exempt.length && exempt.some(k => qn.includes(k))) continue;
+    return rule;
+  }
+  if(qn.length < CFG.short_chat.max_chars){
+    const pool = courseTermBigrams();
+    let hit = false;
+    bigrams(qn).forEach(g => { if(pool.has(g)) hit = true; });
+    if(!hit) return {rule_id:'V08', fallback:CFG.short_chat.message};
+  }
+  return null;
+}
+function answer(q){
+  const qn = normalize(q);
+  const rule = checkOutOfScope(qn);
+  if(rule){
+    return {action:'拒答', reason:'out_of_scope', rule_id:rule.rule_id,
+            fallback:rule.fallback, hits:[]};
+  }
+  const scored = KB.items.map(it => {
+    const [score, matched] = scoreEntry(qn, it);
+    return {score, matched, item:it};
+  }).sort((a,b) => b.score - a.score);
+  const top = scored.length ? scored[0].score : 0;
+  if(!scored.length || top <= 0){
+    return {action:'拒答', reason:'no_hit', score:0,
+            fallback:CFG.no_hit.message, hits:[]};
+  }
+  if(top < CFG.threshold){
+    return {action:'拒答', reason:'low_confidence', score:top,
+            fallback:CFG.low_confidence.message, matched:scored[0].matched, hits:[]};
+  }
+  const ties = scored.filter(x => Math.abs(x.score - top) < 1e-9);
+  const hits = ties.slice(0, CFG.tie.max_items).map(x => ({
+    id:x.item.id, score:x.score, matched:x.matched,
+    answer:x.item.answer, source:x.item.source, question:x.item.question
+  }));
+  return {action:'应答', reason:'matched', score:top,
+          confidence_note: ties.length > 1 ? CFG.tie.note : '', hits};
+}
+
+/* ===== 界面渲染 ===== */
+const EXAMPLES = [
+  '这门课一共几次课',      // 直接命中
+  'PPT 在哪拿',            // 术语别名命中
+  '没装 Trae 会不会影响成绩', // 关键词易误伤的边界问法
+  '我的成绩是多少',        // 越界拒答 V01
+  '考试是几月几号',        // 越界拒答 V05
+  '量子纠缠原理是什么'     // 无命中/低置信度
+];
+function esc(s){
+  return String(s).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function render(question, res){
+  const box = document.getElementById('result');
+  if(res.action === '拒答'){
+    const reasonText = {
+      out_of_scope:`越界规则 ${res.rule_id} 命中`,
+      low_confidence:`匹配得分 ${res.score.toFixed(2)} < 阈值 ${CFG.threshold}`,
+      no_hit:'知识库无命中'
+    }[res.reason] || '';
+    box.innerHTML = `
+      <span class="badge no">已拒答 · 不编造答案</span>
+      <div class="answer-box reject">
+        <div class="q-echo">问：${esc(question)}</div>
+        <p class="a-text">${esc(res.fallback)}</p>
+        <div class="meta"><div>判定依据<b>${esc(reasonText)}</b></div>
+          <div>处理动作<b>停止匹配，直接拒答</b></div></div>
+      </div>`;
+    return;
+  }
+  const cards = res.hits.map(h => `
+    <div class="hit">
+      <div class="hid">命中条目 ${esc(h.id)}</div>
+      <div class="hq">标准问法：${esc(h.question)}</div>
+      <p class="a-text" style="margin-bottom:12px">${esc(h.answer)}</p>
+      <div class="meta">
+        <div>匹配得分<b>${h.score.toFixed(2)}</b></div>
+        <div>命中别名/问法<b>${esc(h.matched)}</b></div>
+        <div>来源 source<b>${esc(h.source)}</b></div>
+      </div>
+    </div>`).join('');
+  box.innerHTML = `
+    <span class="badge ok">已应答 · 命中 ${res.hits.length} 条</span>
+    ${cards}
+    ${res.confidence_note ? `<div class="note">${esc(res.confidence_note)}：以上条目得分并列，可能需要人工确认。</div>` : ''}`;
+}
+function ask(question){
+  const q = (question || document.getElementById('q').value).trim();
+  if(!q) return;
+  document.getElementById('q').value = q;
+  render(q, answer(q));
+}
+document.getElementById('askBtn').addEventListener('click', () => ask());
+document.getElementById('q').addEventListener('keydown', e => {
+  if(e.key === 'Enter') ask();
+});
+const chips = document.getElementById('chips');
+EXAMPLES.forEach(e => {
+  const b = document.createElement('button');
+  b.className = 'chip'; b.type = 'button'; b.textContent = e;
+  b.addEventListener('click', () => ask(e));
+  chips.appendChild(b);
+});
+</script>
+</body>
+</html>
